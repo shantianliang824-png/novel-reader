@@ -1,0 +1,21 @@
+{
+  "name": "jianyue-reader",
+  "productName": "简阅 · 小说阅读器",
+  "version": "1.0.0",
+  "description": "简洁的本地小说阅读器，支持 TXT 导入",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "author": "shantianliang824-png",
+  "license": "MIT",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^44.9.0"
+  }
+}

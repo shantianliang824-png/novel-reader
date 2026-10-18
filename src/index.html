@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>简阅</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="light">
+
+  <!-- 书架视图 -->
+  <div id="shelfView" class="view active">
+    <header class="shelf-header">
+      <div class="brand">
+        <h1>简阅</h1>
+        <span class="sub">简洁的小说阅读器</span>
+      </div>
+      <div class="shelf-actions">
+        <input id="searchInput" class="search" type="search" placeholder="搜索书名…" />
+        <button id="importBtn" class="btn btn-primary">＋ 导入小说</button>
+      </div>
+    </header>
+    <main class="shelf-grid" id="shelfGrid"></main>
+    <div id="emptyState" class="empty hidden">
+      <div class="empty-icon">📖</div>
+      <p>书架空空如也</p>
+      <p class="hint">点击右上角「导入小说」添加你的第一本 TXT</p>
+    </div>
+  </div>
+
+  <!-- 阅读视图 -->
+  <div id="readerView" class="view">
+    <header class="reader-bar">
+      <button id="backBtn" class="icon-btn" title="返回书架">←</button>
+      <div class="reader-title">
+        <span id="readerBookTitle"></span>
+        <span id="readerChapterTitle" class="chapter-sub"></span>
+      </div>
+      <div class="reader-actions">
+        <button id="tocBtn" class="icon-btn" title="目录">☰</button>
+        <button id="bookmarkBtn" class="icon-btn" title="书签">🔖</button>
+        <button id="settingsBtn" class="icon-btn" title="设置">Aa</button>
+      </div>
+    </header>
+    <main id="readerScroll" class="reader-scroll">
+      <div id="readerContent" class="reader-content"></div>
+    </main>
+    <footer class="reader-footer">
+      <span id="readerProgress">-</span>
+      <div class="progress-track"><i id="progressFill"></i></div>
+    </footer>
+
+    <!-- 目录抽屉 -->
+    <aside id="tocPanel" class="panel">
+      <div class="panel-header"><h2>目录</h2><button class="panel-close" data-close="tocPanel">×</button></div>
+      <div class="panel-body" id="tocList"></div>
+    </aside>
+
+    <!-- 书签抽屉 -->
+    <aside id="bookmarkPanel" class="panel">
+      <div class="panel-header"><h2>书签</h2><button class="panel-close" data-close="bookmarkPanel">×</button></div>
+      <div class="panel-body">
+        <button id="addBookmarkBtn" class="btn btn-primary block">＋ 在当前位置添加书签</button>
+        <div id="bookmarkList" class="bm-list"></div>
+      </div>
+    </aside>
+
+    <!-- 设置面板 -->
+    <aside id="settingsPanel" class="panel">
+      <div class="panel-header"><h2>阅读设置</h2><button class="panel-close" data-close="settingsPanel">×</button></div>
+      <div class="panel-body settings-body">
+        <div class="setting-row">
+          <label>主题</label>
+          <div class="theme-switch" id="themeSwitch">
+            <button data-theme="light">浅色</button>
+            <button data-theme="sepia">护眼</button>
+            <button data-theme="dark">夜间</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label>字号 <span id="fontSizeVal">18</span></label>
+          <input id="fontSizeRange" type="range" min="12" max="32" step="1" />
+        </div>
+        <div class="setting-row">
+          <label>行距</label>
+          <input id="lineHeightRange" type="range" min="1.4" max="2.6" step="0.1" />
+        </div>
+        <div class="setting-row">
+          <label>字体</label>
+          <select id="fontFamilySelect">
+            <option value="serif">衬线（宋体）</option>
+            <option value="sans">无衬线（黑体）</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>阅读宽度</label>
+          <input id="widthRange" type="range" min="480" max="1000" step="20" />
+        </div>
+        <div class="setting-row check-row">
+          <label>首行缩进</label>
+          <input id="indentToggle" type="checkbox" />
+        </div>
+      </div>
+    </aside>
+
+    <div id="overlay" class="overlay hidden"></div>
+  </div>
+
+  <!-- 重命名弹窗 -->
+  <div id="renameModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>重命名</h2>
+      <input id="renameInput" type="text" placeholder="输入新书名" />
+      <div class="modal-actions">
+        <button id="renameCancel" class="btn">取消</button>
+        <button id="renameOk" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
