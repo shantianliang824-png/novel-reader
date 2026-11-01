@@ -154,6 +154,60 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  // 冒烟测试：仅当环境变量 DSH_SMOKE=1 时启用，正常启动不受影响
+  if (process.env.DSH_SMOKE === '1') {
+    const consoleLogs = [];
+    try {
+      mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+        const msg = typeof message === 'string' ? message : JSON.stringify(message);
+        consoleLogs.push(String(msg).slice(0, 400) + (sourceId ? ' @' + sourceId + ':' + line : ''));
+      });
+    } catch (e) { consoleLogs.push('console-hook-error: ' + e.message); }
+    mainWindow.webContents.once('did-finish-load', async () => {
+      await new Promise((r) => setTimeout(r, 5000));
+      let diag = null;
+      let err = null;
+      try {
+        diag = await mainWindow.webContents.executeJavaScript(
+          `(async () => {
+            const r = {
+              hasApi: typeof window.api === 'object',
+              ready: !!window.__jianyueReady,
+              renderErr: window.__jianyueError || null,
+              title: document.title,
+              cards: document.querySelectorAll('.book-card').length,
+              emptyHidden: (document.getElementById('emptyState') || {}).classList ? document.getElementById('emptyState').classList.contains('hidden') : 'n/a'
+            };
+            try {
+              const s = (await window.api.getStore('bookshelf')) || [];
+              r.shelfLen = s.length;
+              r.shelfTitles = s.map((b) => b.title);
+            } catch (e) { r.shelfErr = String((e && e.message) || e); }
+            const card = document.querySelector('.book-card');
+            if (card && typeof window.openBook === 'function') {
+              try {
+                await window.openBook(card.dataset.id);
+                r.open = {
+                  tocItems: document.querySelectorAll('.toc-item').length,
+                  paras: document.querySelectorAll('#readerContent p').length,
+                  chapterTitle: (document.getElementById('readerChapterTitle') || {}).textContent || ''
+                };
+              } catch (e) { r.openErr = String((e && e.message) || e); }
+            }
+            return r;
+          })()`
+        );
+      } catch (e) {
+        err = (e && e.message) || String(e);
+      }
+      try {
+        const out = process.env.DSH_SMOKE_OUT || path.join(app.getPath('temp'), 'dsh-smoke-result.json');
+        fs.writeFileSync(out, JSON.stringify({ diag, err, console: consoleLogs }));
+      } catch (e) {}
+      app.exit(err ? 2 : (diag && diag.hasApi && diag.ready ? 0 : 1));
+    });
+  }
 }
 
 app.whenReady().then(() => {

@@ -1,6 +1,6 @@
 'use strict';
 
-const api = window.api;
+const bridge = window.api;
 
 const DEFAULT_SETTINGS = {
   fontSize: 18,
@@ -84,13 +84,18 @@ function toast(msg) {
 
 // ---------- 初始化 ----------
 async function init() {
-  settings = { ...DEFAULT_SETTINGS, ...(await api.getStore('settings')) };
-  shelf = (await api.getStore('bookshelf')) || [];
-  progress = (await api.getStore('progress')) || {};
-  bookmarks = (await api.getStore('bookmarks')) || {};
-  bindSettingsControls();
-  applySettings();
-  renderShelf();
+  try {
+    settings = { ...DEFAULT_SETTINGS, ...(await bridge.getStore('settings')) };
+    shelf = (await bridge.getStore('bookshelf')) || [];
+    progress = (await bridge.getStore('progress')) || [];
+    bookmarks = (await bridge.getStore('bookmarks')) || [];
+    bindSettingsControls();
+    applySettings();
+    renderShelf();
+    window.__jianyueReady = true;
+  } catch (err) {
+    window.__jianyueError = String((err && err.stack) || err);
+  }
 }
 
 // ---------- 视图切换 ----------
@@ -139,11 +144,11 @@ function cardHtml(b) {
 }
 
 async function doImport() {
-  const results = await api.importFiles();
+  const results = await bridge.importFiles();
   if (!results || !results.length) return;
   const ok = results.filter((r) => r.ok).length;
   const fail = results.length - ok;
-  shelf = (await api.getStore('bookshelf')) || [];
+  shelf = (await bridge.getStore('bookshelf')) || [];
   renderShelf();
   if (ok) toast(`已导入 ${ok} 本${fail ? `，${fail} 本失败` : ''}`);
   else toast('导入失败');
@@ -154,7 +159,7 @@ async function deleteBook(id) {
   if (!b) return;
   const sure = confirm(`确定删除《${b.title}》吗？该操作不可撤销。`);
   if (!sure) return;
-  await api.deleteBook(id);
+  await bridge.deleteBook(id);
   shelf = shelf.filter((x) => x.id !== id);
   delete progress[id];
   delete bookmarks[id];
@@ -182,7 +187,7 @@ async function saveRename() {
   const b = shelf.find((x) => x.id === renameTargetId);
   if (b) {
     b.title = name;
-    await api.setStore('bookshelf', shelf);
+    await bridge.setStore('bookshelf', shelf);
     renderShelf();
     if (currentBook && currentBook.id === b.id) { currentBook.title = name; readerBookTitle.textContent = name; }
   }
@@ -195,7 +200,7 @@ async function openBook(id) {
   const entry = shelf.find((b) => b.id === id);
   if (!entry) return;
   try {
-    const res = await api.readBook(id);
+    const res = await bridge.readBook(id);
     currentBook = entry;
     currentContent = res.content;
     chapters = splitChapters(currentContent);
@@ -295,9 +300,9 @@ function saveProgressNow() {
     totalChapters: chapters.length,
     updatedAt: Date.now()
   };
-  api.setStore('progress', progress);
+  bridge.setStore('progress', progress);
   const b = shelf.find((x) => x.id === currentBook.id);
-  if (b) { b.lastReadAt = Date.now(); api.setStore('bookshelf', shelf); }
+  if (b) { b.lastReadAt = Date.now(); bridge.setStore('bookshelf', shelf); }
 }
 
 // ---------- 目录 ----------
@@ -343,7 +348,7 @@ function addBookmark() {
     createdAt: Date.now()
   };
   (bookmarks[currentBook.id] = bookmarks[currentBook.id] || []).push(bm);
-  api.setStore('bookmarks', bookmarks);
+  bridge.setStore('bookmarks', bookmarks);
   renderBookmarks();
   toast('已添加书签');
 }
@@ -384,7 +389,7 @@ function bindSettingsControls() {
   });
 }
 function persistSettings() {
-  api.setStore('settings', settings);
+  bridge.setStore('settings', settings);
 }
 function applySettings() {
   document.body.dataset.theme = settings.theme;
@@ -453,7 +458,7 @@ bookmarkList.addEventListener('click', (e) => {
   if (del) {
     const bid = del.dataset.del;
     bookmarks[currentBook.id] = (bookmarks[currentBook.id] || []).filter((b) => b.id !== bid);
-    api.setStore('bookmarks', bookmarks);
+    bridge.setStore('bookmarks', bookmarks);
     renderBookmarks();
     return;
   }

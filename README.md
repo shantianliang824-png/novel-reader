@@ -14,7 +14,7 @@
 
 ## 🖥️ 技术栈
 
-- Electron 44（Node.js 主进程 + Chromium 渲染层）
+- Electron 43（Node.js 主进程 + Chromium 渲染层）
 - 原生 HTML / CSS / JavaScript（零前端框架，简洁轻量）
 - 数据存储在本地用户目录（`app.getPath('userData')`），不上传任何内容
 
@@ -48,6 +48,18 @@ pnpm start
 > `node node_modules/electron/install.js`
 
 Windows 用户也可直接双击 `start.bat` 启动。
+
+### 🧪 自检（冒烟测试）
+
+设置环境变量 `DSH_SMOKE=1` 启动，应用会自动完成一次端到端自检：加载页面、验证 IPC 桥接、渲染书架；若书架有书，还会打开第一本并检测章节目录。结果写入 `DSH_SMOKE_OUT` 指定的 JSON 文件后自动退出：
+
+```powershell
+$env:DSH_SMOKE = "1"
+$env:DSH_SMOKE_OUT = "$env:TEMP\smoke.json"
+electron .
+```
+
+结果中 `hasApi` 与 `ready` 为 `true` 即表示应用运行正常。
 
 ## 🔐 隐私说明
 
